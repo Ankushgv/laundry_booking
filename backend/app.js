@@ -1,34 +1,33 @@
-require('dotenv').config()
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import connectDB from "./src/config/db.js";
 
-const express = require('express')
-const mongoose = require('mongoose')
-const bookingRoutes = require('./src/routes/bookingRoutes')
+import registerRoutes from "./src/routes/registerRoutes.js";
+import loginRoutes from "./src/routes/loginRoutes.js";
+import bookingRoutes from "./src/routes/bookingRoutes.js";
+import settingsRoutes from "./src/routes/settingsRoutes.js";
 
-// express app
-const app = express()
+dotenv.config();
+connectDB();
 
-// middleware to read json
-app.use(express.json())
+const app = express();
 
-// middleware
-app.use((req, res, next) => {
-    console.log(req.path, req.method)
-    next()
-})
+app.use(cors());
+app.use(express.json());
 
-// router middleware
-app.use('/api', bookingRoutes)
+app.use("/api/register", registerRoutes);
+app.use("/api/login", loginRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/settings", settingsRoutes);
 
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        // start the server and listen to port
-        app.listen(process.env.PORT, ()=> {
-            console.log("Connected to DB and listensing to port", process.env.PORT)
-        })
-    })
-    .catch((err) => {
-        console.log(err)
-    })
+app.get("/", (req, res) => {
+  res.send("Laundry API Running...");
+});
 
+app.use((err, req, res, next) => {
+  res.status(500).json({ message: "Server Error" });
+});
 
-
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
