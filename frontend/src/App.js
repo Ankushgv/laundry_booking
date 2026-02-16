@@ -1,27 +1,25 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Layout from "./components/Layout";
 import Home from "./pages/Home";
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Setting from './pages/Settings';
-import Navbar from "./components/Navbar";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Settings from "./pages/Settings";
+import "./styles/global.css";
 
 function App() {
+  const token = localStorage.getItem("token");
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <Router>
-          <Navbar />
-          <div className="pages">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/Login" element={<Login />} />
-              <Route path="/Register" element={<Register />} />
-              <Route path="/Setting" element={<Setting />} />
-            </Routes>
-          </div>
-        </Router>
-      </header>
-    </div>
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={token ? <Home /> : <Navigate to="/login" />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/settings" element={token ? <Settings /> : <Navigate to="/login" />} />
+        </Routes>
+      </Layout>
+    </Router>
   );
 }
 
