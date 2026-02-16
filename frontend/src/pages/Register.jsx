@@ -1,39 +1,70 @@
+import { useState } from "react";
+import { createUser } from "../api";
+import { useNavigate } from "react-router-dom";
+import "../styles/global.css";
 
-import { useState } from "react"
-import { Link } from "react-router-dom"
+function Register() {
+  const navigate = useNavigate();
 
-export default function Register() {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const submitHandler = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const { data } = await createUser(form);
+      localStorage.setItem("user", JSON.stringify(data));
+      navigate("/");
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Registration failed"
+      );
+    }
+  };
+
   return (
-    <>
-      <div className="d-flex justify-content-center align-items-center bg-secondary vh-100">
-        <div className="bg-white p-3 rounded w-50">
-          <form>
-            <div>
-              <div className="mb-3">
-                <label htmlFor="firstname">First Name</label>
-                <input type="text" name="firstname" placeholder="John" className="form-control rounded-0" />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="lastname">Last Name</label>
-                <input type="text" name="lastname" placeholder="Doe" className="form-control rounded-0" />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="email">Email</label>
-                <input type="text" name="email" placeholder="test@gmail.com" className="form-control rounded-0" />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="password">Password</label>
-                <input type="password" name="password" className="form-control rounded-0" />
-                <br />
-              </div>
-              <button type="submit" className="btn btn-success w-100 rounded-0">Register</button>
-              <br />
-            </div>
-          </form>
-          <p>Already have an account?</p>
-          <Link to="/login" className="btn btn-default border-100 w-100 rounded-0">Login</Link>
-        </div>
-      </div>
-    </>
-  )
-};
+    <div className="auth-container">
+      <form className="card" onSubmit={submitHandler}>
+        <h2>Create Account</h2>
+
+        {error && <p className="error">{error}</p>}
+
+        <input
+          type="text"
+          name="name"
+          placeholder="Full Name"
+          onChange={handleChange}
+        />
+
+        <input
+          type="email"
+          name="email"
+          placeholder="Email Address"
+          onChange={handleChange}
+        />
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          onChange={handleChange}
+        />
+
+        <button type="submit">Register</button>
+      </form>
+    </div>
+  );
+}
+
+export default Register;
