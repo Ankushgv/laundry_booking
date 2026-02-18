@@ -1,63 +1,97 @@
-const Booking = require('../models/bookingModel')
-const mongoose = require('mongoose')
+import Booking from "../models/bookingModel.js";
 
-//Get All
-const getBookings = async (req,res) => {
-    const bookings = await Booking.find({})//.sort({createdAt: -1})
-    res.status(200).json(bookings)
-}
-
-//Get Single
-const getBooking = async (req,res) => {
-    const {id} = req. params
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(404).json({error: 'No booking found'})
+export const createBooking = async (req, res) => {
+  try {
+    console.log("Creating booking for user:", req.user?.email);
+    
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized" });
     }
 
-    const booking = await Booking.findById(id)
+    const { bookingDate, bookingTime, duration } = req.body;
+
+    // Validate required fields
+    if (!bookingDate || !bookingTime) {
+      return res.status(400).json({ 
+        message: "Please provide both date and time for booking" 
+      });
+    }
+
+    const booking = await Booking.create({
+      user: req.user._id,
+      bookingDate,
+      bookingTime,
+      duration: duration || 3,
+    });
+
+    console.log("Booking created successfully:", booking._id);
+    res.status(201).json({
+      message: "Booking created successfully",
+      booking,
+    });
+
+  } catch (error) {
+    console.error("Booking creation error:", error);
+    res.status(500).json({ 
+      message: "Failed to create booking",
+      error: error.message 
+    });
+  }
+};
+
+export const getBookings = async (req, res) => {
+  try {
+    console.log("Fetching bookings for user:", req.user?.email);
+    
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    const bookings = await Booking.find({ user: req.user._id })
+      .sort({ bookingDate: -1 });
+
+    console.log("Found", bookings.length, "bookings");
+    res.json(bookings);
+
+  } catch (error) {
+    console.error("Get bookings error:", error);
+    res.status(500).json({ 
+      message: "Failed to fetch bookings",
+      error: error.message 
+    });
+  }
+};
+
+export const deleteBooking = async (req, res) => {
+  try {
+    console.log("Deleting booking:", req.params.id);
+    
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    const booking = await Booking.findById(req.params.id);
+
     if (!booking) {
-        return res.status(404).json({error: 'No booking found'})
+      return res.status(404).json({ message: "Booking not found" });
     }
-    res.status(200).json(booking)
-}
 
-//Create New
-const newBooking = async (req,res) => {
-    // res.json({msg: 'POST METHOD'})
-    const {fullname, email, password} = req.body
-    try {
-        const booking = await Booking.create({fullname: 'Ankush', email: 'Test', password: '123456'})
-        res.status(200).json(booking)
-    } catch (err) {
-        res.status(400).json({err: err.message})
+    // Check if booking belongs to user
+    if (booking.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ 
+        message: "Not authorized to delete this booking" 
+      });
     }
-}
 
-//Delete
-const deleteBooking = async (req,res) => {
-    const {id} = req.params 
-    const booking = await Booking.findOneAndDelete({_id: id})
-    if (!booking) {
-        return res.status(404).json({error: 'No booking found'})
-    }
-    res.status(200).json(booking)
-}
+    await Booking.findByIdAndDelete(req.params.id);
+    console.log("Booking deleted successfully");
+    res.json({ message: "Booking deleted successfully" });
 
-//Update
-const updateBooking = async (req,res) => {
-    const {id} = req.body
-    const booking = await Booking.findByIdAndUpdate({_id: id})
-    if (!booking) {
-        res.status(404).json({error: 'No booking found'})
-    }
-    res.status(200).json(booking)
-}
-
-module.exports = {
-    getBookings,
-    getBooking,
-    newBooking,
-    deleteBooking,
-    updateBooking
-}
+  } catch (error) {
+    console.error("Delete booking error:", error);
+    res.status(500).json({ 
+      message: "Failed to delete booking",
+      error: error.message 
+    });
+  }
+};
