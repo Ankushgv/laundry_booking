@@ -1,25 +1,16 @@
-const express = require('express')
-const router = express.Router()
-const {getBookings,
-    getBooking,
-    newBooking,
-    deleteBooking,
-    updateBooking
-} = require('../controllers/bookingController')
+import express from "express";
+import { 
+  createBooking, 
+  getBookings, 
+  deleteBooking 
+} from "../controllers/bookingController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
-// GET
-router.get('/', getBookings)
+const router = express.Router();
 
-// GET single
-router.get('/:id', getBooking)
+// All routes require authentication
+router.post("/", protect, createBooking);
+router.get("/", protect, getBookings);
+router.delete("/:id", protect, deleteBooking);
 
-// POST
-router.post('/', newBooking)
-
-// DELETE
-router.delete('/:id', deleteBooking)
-
-// PATCH
-router.patch('/:id', updateBooking)
-
-module.exports = router;
+export default router;
